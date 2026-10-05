@@ -1,12 +1,33 @@
 # Project-level RBAC in Harness NextGen (Platform)
 
 terraform {
+
+
+  backend "remote" {
+    workspaces {
+      name = "terraform-template-module"
+    }
+    organization = "tf-demo-tyler"
+    hostname     = "app.terraform.io"
+  }
   required_providers {
     harness = {
       source  = "harness/harness"
       version = "0.45.8"
     }
+    
   }
+}
+
+module "rbac" {
+  # source = "../RBAC/RBAC.tf"
+    source = "git::https://github.com/lloyds-demo/rbac-module.git"
+
+  harness_account_id = var.harness_account_id
+  harness_platform_api_key = var.harness_platform_api_key
+  harness_org_id = var.harness_org_id
+  harness_project_id = var.harness_project_id
+  create_project = var.create_project
 }
 
 provider "harness" {
@@ -18,9 +39,9 @@ provider "harness" {
 resource "harness_platform_project" "this" {
   count = var.create_project ? 1 : 0
 
-  identifier  = var.harness_project_id
-#   name        = coalesce(var.harness_project_name, var.harness_project_id)
-name        = var.harness_project_id
+  identifier = var.harness_project_id
+  #   name        = coalesce(var.harness_project_name, var.harness_project_id)
+  name        = var.harness_project_id
   org_id      = var.harness_org_id
   description = "Managed by Terraform"
 }
@@ -29,10 +50,10 @@ resource "harness_platform_pipeline" "demo" {
   org_id     = var.harness_org_id
   project_id = var.harness_project_id
 
-  identifier = "demo_pipeline"
-  name       = "Demo Pipeline"
+  identifier  = "demo_pipeline"
+  name        = "Demo Pipeline"
   description = "A demo pipeline managed by Terraform."
-  yaml = <<-EOT
+  yaml        = <<-EOT
     pipeline:
       name: Demo Pipeline
       identifier: demo_pipeline
